@@ -95,7 +95,7 @@ int main()
     inserareNodLaFinal(&cap, initializare("masina4", 10));
     inserareNodLaFinal(&cap, initializare("masina5", 8));
     afisareLista(cap);
-    // dau free
+    // dau free la lista
     freeLista(cap);
     return 0;
 }
