@@ -2,90 +2,111 @@
 #include <malloc.h>
 #include <string.h>
 
-typedef struct Cofetarie
+typedef struct produs
 {
+    int *cod;
     char *denumire;
-    int *preturi;
-    int dim;
-} Cofetarie;
+    float pret;
+    float cantitate;
 
-typedef struct Nod
-{
-    struct Nod *prev;
-    struct Nod *next;
-    Cofetarie info; // te complici daca faci Cofetarie *info;
-} Nod;
+} produs;
 
-typedef struct ListaDubla
+typedef struct nodls
 {
-    Nod *primulNod;
-    Nod *ultimulNod;
-} ListaDubla;
+    produs *inf;
+    struct nodls *next, *prev;
+} nodls;
 
-Cofetarie initializareCofetarie(char *denumire, int *preturi, int dim)
+nodls *inserare(nodls *cap, nodls **coada, produs *p)
 {
-    Cofetarie c;
-    c.denumire = malloc(strlen(denumire) + 1);
-    strcpy(c.denumire, denumire);
-    c.dim = dim;
-    c.preturi = malloc(sizeof(int) * dim);
-    for (int i = 0; i < c.dim; i++)
+    nodls *nou = malloc(sizeof(nodls));
+    nou->inf = malloc(sizeof(produs));
+    nou->inf->cod = malloc(sizeof(int));
+    *(nou->inf->cod) = *(p->cod);
+    nou->inf->denumire = malloc(strlen(p->denumire) + 1);
+    strcpy(nou->inf->denumire, p->denumire);
+    nou->inf->pret = p->pret;
+    nou->inf->cantitate = p->cantitate;
+    nou->prev = NULL;
+    nou->next = NULL;
+    if (cap == NULL)
     {
-        c.preturi[i] = preturi[i];
+        cap = nou;
+        *coada = nou;
     }
-    return c;
+    else
+    {
+        (*coada)->next = nou;
+        nou->prev = (*coada);
+        *coada = nou;
+    }
+    return cap;
 }
 
-void afisare(Cofetarie c)
+void traversare(nodls *cap)
 {
-    printf("Denumire: %s\n", c.denumire);
-    printf("Preturi: ");
-    for (int i = 0; i < c.dim; i++)
+    nodls *tmp = cap;
+    while (tmp != NULL)
     {
-        printf("%d ", c.preturi[i]);
+        printf("\n Cod=%d, Denumire =%s, Pret=%5.2f, Cantitate=%5.2f",
+               *(tmp->inf->cod), tmp->inf->denumire, tmp->inf->pret, tmp->inf->cantitate);
+        tmp = tmp->next;
     }
     printf("\n");
 }
 
-ListaDubla inserareInceput(ListaDubla lista, Cofetarie c)
+void traversareInversa(nodls *coada)
 {
-    Nod *nou = malloc(sizeof(Nod));
-    nou->prev = NULL;
-    nou->next = lista.primulNod;
-    nou->info = c;
-    if (lista.primulNod != NULL)
+    nodls *tmp = coada;
+    while (tmp != NULL)
     {
-        lista.primulNod->prev = nou;
+        printf("\n Cod=%d, Denumire =%s, Pret=%5.2f, Cantitate=%5.2f",
+               *(tmp->inf->cod), tmp->inf->denumire, tmp->inf->pret, tmp->inf->cantitate);
+        tmp = tmp->prev;
     }
-    else
-    {
-        lista.ultimulNod = nou;
-    }
-    lista.primulNod = nou;
-    return lista;
 }
 
-void afisareLista(ListaDubla lista)
+void dezalocare(nodls *cap)
 {
-    Nod *temp = lista.primulNod;
-    while (temp != NULL)
+    while (cap != NULL)
     {
-        afisare(temp->info);
-        temp = temp->next;
+        nodls *tmp = cap;
+        cap = cap->next;
+        free(tmp->inf->cod);
+        free(tmp->inf->denumire);
+        free(tmp->inf);
+
+        free(tmp);
     }
 }
 
 int main()
 {
-    ListaDubla lista;
-    lista.primulNod = NULL;
-    lista.ultimulNod = NULL;
-    Cofetarie c, c1;
-    int preturi[] = {1, 2, 3};
-    c = initializareCofetarie("Cofetarie1", preturi, 3);
-    lista = inserareInceput(lista, c);
-    c1 = initializareCofetarie("Cofetarie2", NULL, 0);
-    lista = inserareInceput(lista, c1);
-    afisareLista(lista);
+    FILE *f = fopen("input.txt", "r");
+    int n;
+    fscanf(f, "%d", &n);
+    nodls *cap = NULL, *coada = NULL;
+    produs *p;
+    char buffer[20];
+    for (int i = 0; i < n; i++)
+    {
+        p = (produs *)malloc(sizeof(produs));
+        p->cod = (int *)malloc(sizeof(int));
+        fscanf(f, "%d", p->cod);
+        fscanf(f, "%s", buffer);
+        p->denumire = (char *)malloc((strlen(buffer) + 1) * sizeof(char));
+        strcpy(p->denumire, buffer);
+        fscanf(f, "%f", &p->pret);
+        fscanf(f, "%f", &p->cantitate);
+        cap = inserare(cap, &coada, p);
+        free(p->denumire);
+        free(p->cod);
+        free(p);
+    }
+    traversare(cap);
+    traversareInversa(coada);
+
+    dezalocare(cap);
+
     return 0;
 }
