@@ -7,7 +7,6 @@ typedef struct student
     int nrMatricol;
     char *nume;
     float medie;
-
 } student;
 
 typedef struct nodls
