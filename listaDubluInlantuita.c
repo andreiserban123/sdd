@@ -8,7 +8,6 @@ typedef struct produs
     char *denumire;
     float pret;
     float cantitate;
-
 } produs;
 
 typedef struct nodls
@@ -105,8 +104,6 @@ int main()
     }
     traversare(cap);
     traversareInversa(coada);
-
     dezalocare(cap);
-
     return 0;
 }
