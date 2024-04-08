@@ -324,6 +324,14 @@ int main()
     for (unsigned char i = 0; i < size; i++)
         printf("%s\n", conturi[i].iban);
 
+    sortareLista(&listaD);
+    printf("Lista dubla sortata dupa sold:\n");
+    temp = listaD.p;
+    while (temp)
+    {
+        printf("%s %s %f\n", temp->pcb->iban, temp->pcb->titular, temp->pcb->sold);
+        temp = temp->next;
+    }
     // dezalocare lista dubla
     while (listaD.p)
     {
