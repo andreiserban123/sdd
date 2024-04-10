@@ -357,7 +357,7 @@ int main()
     // dezalocare vector de conturi bancare
     free(conturi);
     conturi = NULL;
-
     fclose(f);
+    f = NULL;
     return 0;
 }
