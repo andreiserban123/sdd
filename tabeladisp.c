@@ -25,26 +25,53 @@ int functieHash(int cheie, hashT tabela)
     return cheie % tabela.nrElem;
 }
 
+void inserareLS(nodLS **capLS, produs p)
+{
+    nodLS *nou = (nodLS *)malloc(sizeof(nodLS));
+    nou->inf.cod = p.cod;
+    nou->inf.denumire = (char *)malloc((strlen(p.denumire) + 1) *
+                                       sizeof(char));
+    strcpy(nou->inf.denumire, p.denumire);
+    nou->inf.pret = p.pret;
+    nou->next = NULL;
+    if (*capLS == NULL)
+        *capLS = nou;
+    else
+    {
+        nodLS *temp = *capLS;
+        while (temp->next)
+            temp = temp->next;
+        temp->next = nou;
+    }
+}
+
 void inserareHash(hashT tabela, produs p)
 {
     int poz = functieHash(p.cod, tabela);
-    nodLS *nou = malloc(sizeof(nodLS));
-    nou->next = NULL;
-    nou->inf.cod = p.cod;
-    nou->inf.denumire = malloc(strlen(p.denumire) + 1);
-    strcpy(nou->inf.denumire, p.denumire);
-    nou->inf.pret = p.pret;
-    if (tabela.vect[poz] == NULL)
-    {
-        tabela.vect[poz] = nou;
-    }
-    else
-    {
+    inserareLS(&tabela.vect[poz], p);
+}
 
-        nou->next = tabela.vect[poz];
-        tabela.vect[poz] = nou;
+void traversareLS(nodLS *capLS)
+{
+    nodLS *temp = capLS;
+    while (temp)
+    {
+        printf("\nCod = %d, Denumire = %s, Pret = %5.2f",
+               temp->inf.cod, temp->inf.denumire, temp->inf.pret);
+        temp = temp->next;
     }
 }
+
+void traversareHash(hashT tabela)
+{
+    for (int i = 0; i < tabela.nrElem; i++)
+        if (tabela.vect[i] != NULL)
+        {
+            printf("\nPozitie = %d", i);
+            traversareLS(tabela.vect[i]);
+        }
+}
+
 void dezalocareLS(nodLS *capLS)
 {
     nodLS *temp = capLS;
@@ -56,67 +83,42 @@ void dezalocareLS(nodLS *capLS)
         temp = temp2;
     }
 }
-void traversareHash(hashT tabela)
-{
-    for (int i = 0; i < tabela.nrElem; i++)
-    {
-        if (tabela.vect[i] != NULL)
-        {
-            printf("Pe poz %d sunt:\n", i);
-            nodLS *cap = tabela.vect[i];
-            while (cap != NULL)
-            {
-                printf("    Codul:%d, Denumire:%s, Pret:%.2f\n", cap->inf.cod, cap->inf.denumire, cap->inf.pret);
-                cap = cap->next;
-            }
-        }
-    }
-}
 
-void dezalocareHashT(hashT tabela)
+void dezalocareHash(hashT tabela)
 {
     for (int i = 0; i < tabela.nrElem; i++)
-    {
         if (tabela.vect[i] != NULL)
-        {
             dezalocareLS(tabela.vect[i]);
-        }
-    }
     free(tabela.vect);
 }
 
-int main(int argc, char const *argv[])
+void main()
 {
     hashT tabela;
     tabela.nrElem = 23;
-    tabela.vect = malloc(tabela.nrElem * sizeof(nodLS *));
+    tabela.vect = (nodLS **)malloc(tabela.nrElem * sizeof(nodLS *));
     for (int i = 0; i < tabela.nrElem; i++)
-    {
         tabela.vect[i] = NULL;
-    }
+
     int nrProd;
     char buffer[20];
     produs p;
-    FILE *f = fopen("produse.txt", "r");
-    if (f == NULL)
-    {
-        free(tabela.vect);
-        printf("CANNOT OPEN THE FILE!");
-        return 1;
-    }
+
+    FILE *f = fopen("disp.txt", "r");
     fscanf(f, "%d", &nrProd);
     for (int i = 0; i < nrProd; i++)
     {
         fscanf(f, "%d", &p.cod);
         fscanf(f, "%s", buffer);
-        p.denumire = malloc(strlen(buffer) + 1);
+        p.denumire = (char *)malloc((strlen(buffer) + 1) *
+                                    sizeof(char));
         strcpy(p.denumire, buffer);
         fscanf(f, "%f", &p.pret);
         inserareHash(tabela, p);
         free(p.denumire);
-        p.denumire = NULL;
     }
+    fclose(f);
+
     traversareHash(tabela);
-    dezalocareHashT(tabela);
-    return 0;
+    dezalocareHash(tabela);
 }
