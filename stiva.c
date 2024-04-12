@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <malloc.h>
-
+#include <string.h>
 typedef struct
 {
     int zi, luna, an;
@@ -14,13 +14,13 @@ typedef struct
     float durata;
 } notificare;
 
-typedef struct
+typedef struct nodStiva
 {
     notificare inf;
     struct nodStiva *next;
 } nodStiva;
 
-typedef struct
+typedef struct nodCoada
 {
     notificare inf;
     struct nodCoada *next;
