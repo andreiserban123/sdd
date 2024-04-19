@@ -87,7 +87,7 @@ void afisareVect(student *v, int nr)
 	}
 }
 
-NodLS *stergereNOD(NodLS *cap, int nrMatricol)
+NodLS *stergereNOD(NodLS *cap, int nrMatricol, int *nr)
 {
 
 	if (cap == NULL)
@@ -103,6 +103,7 @@ NodLS *stergereNOD(NodLS *cap, int nrMatricol)
 		cap = cap->next;
 		free(tmp->inf.nume);
 		free(tmp);
+		(*nr)--;
 		return cap;
 	}
 	NodLS *prev = tmp;
@@ -114,6 +115,7 @@ NodLS *stergereNOD(NodLS *cap, int nrMatricol)
 			prev->next = tmp->next;
 			free(tmp->inf.nume);
 			free(tmp);
+			(*nr)--;
 			return cap;
 		}
 		prev = tmp;
@@ -133,7 +135,7 @@ void dezalocareVect(student **v, int nr)
 	*v = NULL;
 }
 
-NodLS *inserareLaPozitie(NodLS *cap, student s, int poz)
+NodLS *inserareLaPozitie(NodLS *cap, student s, int poz, int *nr)
 {
 
 	NodLS *nou = malloc(sizeof(NodLS));
@@ -174,6 +176,7 @@ NodLS *inserareLaPozitie(NodLS *cap, student s, int poz)
 		i++;
 	}
 	ultim->next = nou;
+	(*nr)++;
 	return cap;
 }
 
@@ -181,7 +184,7 @@ int main()
 {
 	int nr;
 	NodLS *cap = NULL;
-	FILE *f = fopen("listaSimpla.txt", "r");
+	FILE *f = fopen("fisier.txt", "r");
 	if (f != NULL)
 	{
 		fscanf(f, "%d", &nr);
@@ -204,21 +207,18 @@ int main()
 		s1.nume = malloc(strlen("Arabela") + 1);
 		strcpy(s1.nume, "Arabela");
 		s1.medie = 4.5;
-		cap = inserareLaPozitie(cap, s1, 10000);
-
-		cap = stergereNOD(cap, 4000);
-
-		/*cap = stergereNOD(cap, 5000);
-		cap = stergereNOD(cap, 1000);*/
+		cap = inserareLaPozitie(cap, s1, 10000, &nr);
+		cap = stergereNOD(cap, 5000, &nr);
+		cap = stergereNOD(cap, 1000, &nr);
 		printf("\n---------------------\n");
 		traversare(cap);
 
-		// printf("\n-------------salvare vector---------------\n");
-		/*student* v;
+		printf("\n-------------salvare vector---------------\n");
+		student *v;
 		salvareVector(cap, nr, &v);
-		afisareVect(v, nr);*/
+		afisareVect(v, nr);
 		dezalocare(&cap);
-		// dezalocareVect(&v, nr);
+		dezalocareVect(&v, nr);
 		fclose(f);
 	}
 	else
