@@ -70,39 +70,149 @@ void parcurgere(nod *cap)
 IBAN *salvareConturi(nod **cap, int nr, char *currency, int *n)
 {
     *n = 0;
-    IBAN *v = malloc(sizeof(IBAN) * nr);
     nod *tmp = *cap;
-    nod *prev = NULL;
+    IBAN *v = malloc(sizeof(IBAN) * nr);
 
-    while (tmp)
+    while (tmp != NULL)
     {
-        nod *next = tmp->next;
         if (strcmp(tmp->inf.moneda, currency) == 0)
         {
             strcpy(v[(*n)++].iban, tmp->inf.iban);
-            if (tmp == *cap)
+            if (tmp->prev == NULL)
             {
-                *cap = next;
-                if (*cap)
+                (*cap) = (*cap)->next;
+                if ((*cap))
                     (*cap)->prev = NULL;
+                free(tmp->inf.titular);
+                free(tmp);
+                tmp = *cap;
+            }
+            else if (tmp->next == NULL)
+            {
+                nod *p = tmp->prev;
+                p->next = NULL;
+                free(tmp->inf.titular);
+                free(tmp);
+                tmp = p;
             }
             else
             {
-                if (prev)
-                    prev->next = next;
-                if (next)
-                    next->prev = prev;
+                nod *prev = tmp->prev;
+                nod *next = tmp->next;
+                free(tmp->inf.titular);
+                free(tmp);
+                prev->next = next;
+                next->prev = prev;
+                tmp = next;
             }
-            free(tmp->inf.titular);
-            free(tmp);
         }
         else
         {
-            prev = tmp;
+            tmp = tmp->next;
         }
-        tmp = next;
     }
     return v;
+}
+
+void adaugare(nod **cap, float sold)
+{
+    nod *tmp = *cap;
+
+    while (tmp != NULL)
+    {
+        if (tmp->inf.sold >= sold)
+        {
+            nod *nou = malloc(sizeof(nod));
+            nou->inf.titular = malloc(strlen(tmp->inf.titular) + 1);
+            strcpy(nou->inf.titular, tmp->inf.titular);
+            strcpy(nou->inf.iban, "INVALID");
+            strcpy(nou->inf.moneda, "N/A"); // Assuming currency is not relevant for the new node
+            nou->inf.sold = 0;              // Assuming 0 as the default sold for the new node
+            nou->next = NULL;
+            nou->prev = NULL;
+            // cap
+            if (tmp->prev == NULL)
+            {
+                nod *temp = tmp;
+                tmp = tmp->next;
+                free(temp->inf.titular);
+                free(temp);
+                *cap = nou;
+                (*cap)->next = tmp;
+                if (tmp)
+                    tmp->prev = (*cap);
+            }
+            // coada
+            else if (tmp->next == NULL)
+            {
+                nod *p = NULL;
+                p = tmp->prev;
+                free(tmp->inf.titular);
+                free(tmp);
+                p->next = nou;
+                nou->prev = p;
+                tmp = NULL;
+            }
+            else
+            {
+                nod *prev = tmp->prev;
+                nod *next = tmp->next;
+                free(tmp->inf.titular);
+                free(tmp);
+                prev->next = nou;
+                nou->prev = prev;
+                nou->next = next;
+                next->prev = nou;
+                tmp = nou;
+            }
+        }
+        else
+        {
+            tmp = tmp->next;
+        }
+    }
+}
+
+// interschimbare noduri
+void sortare(nod **cap)
+{
+    int sortat = 0;
+    do
+    {
+        sortat = 0;
+        nod *tmp = *cap;
+        while (tmp->next != NULL)
+        {
+            if (tmp->inf.sold > tmp->next->inf.sold)
+            {
+                sortat = 1;
+                nod *p = tmp->next;
+                tmp->next = p->next;
+                p->prev = tmp->prev;
+
+                if (tmp->prev != NULL)
+                {
+                    tmp->prev->next = p;
+                }
+                else
+                {
+                    *cap = p;
+                }
+
+                if (p->next != NULL)
+                {
+                    p->next->prev = tmp;
+                }
+
+                p->next = tmp;
+                tmp->prev = p;
+
+                // Adjust 'tmp' to point to the node before 'p' to continue sorting from the correct position
+                tmp = p;
+            }
+            tmp = tmp->next;
+        }
+    } while (sortat);
 }
 
 int main()
@@ -129,16 +239,17 @@ int main()
         cap = inserare(cap, c);
     }
     fclose(f);
-    parcurgere(cap);
-    int nrElemVector;
-    IBAN *v = salvareConturi(&cap, nr, "RON", &nrElemVector);
-    printf("\nAFISARE VECTOR:");
-    for (int i = 0; i < nrElemVector; i++)
-    {
-        printf("\n%s ", v[i].iban);
-    }
-    free(v);
-    printf("\n  ------ AFISARE LISTA ------ \n");
+
+    // int nrElemVector;
+    // IBAN* v = salvareConturi(&cap, nr, "RON", &nrElemVector);
+    // printf("\nAFISARE VECTOR:");
+    // for (int i = 0; i < nrElemVector; i++)
+    //{
+    //	printf("\n%s ", v[i].iban);
+    // }
+    // free(v);
+    // printf("\n  ------ AFISARE LISTA ------ \n");
+    sortare(&cap);
     parcurgere(cap);
     dezalocareLista(&cap);
     return 0;
