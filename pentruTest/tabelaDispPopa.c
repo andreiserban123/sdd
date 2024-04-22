@@ -1,82 +1,59 @@
 #include <stdio.h>
-#include <string.h>
 #include <malloc.h>
+#include <string.h>
 
-typedef struct cont
+typedef struct cont_bancar
 {
     char iban[25];
     char *titular;
     char moneda[4];
     float sold;
-
-} cont;
+} cont_bancar;
 
 typedef struct nod
 {
     struct nod *next;
-    cont inf;
+    cont_bancar inf;
 } nod;
-
-typedef struct TITULAR
-{
-    char *titular;
-} TITULAR;
 
 typedef struct hashT
 {
-    nod **vect;
     int nrElem;
+    nod **v;
+
 } hashT;
 
-nod *adaugareNod(nod *cap, cont b)
+nod *inserare(nod *cap, cont_bancar c)
 {
+
     nod *nou = malloc(sizeof(nod));
-    nou->inf = b;
+    nou->inf = c;
     nou->next = NULL;
+
     if (cap == NULL)
+    {
         return nou;
+    }
     nod *tmp = cap;
     while (tmp->next != NULL)
     {
         tmp = tmp->next;
     }
     tmp->next = nou;
+    return cap;
 }
 
-void parcurgereLista(nod *cap)
+void parcurgere(nod *cap)
 {
     while (cap)
     {
-        printf("\n%s\n%s\n%s\n%.2f", cap->inf.iban, cap->inf.titular,
+        printf("\n%s\n%s\n%s\n%5.2f", cap->inf.iban, cap->inf.titular,
                cap->inf.moneda, cap->inf.sold);
         cap = cap->next;
     }
 }
 
-int funcHash(cont b, hashT tabela)
-{
-    int cod = b.moneda[0] + b.moneda[1] + b.moneda[2];
-    return cod % tabela.nrElem;
-}
-
-void adaugareTabela(hashT tabela, cont c)
-{
-    int poz = funcHash(c, tabela);
-    tabela.vect[poz] = adaugareNod(tabela.vect[poz], c);
-}
-void parcurgereTabela(hashT tb)
-{
-    for (int i = 0; i < tb.nrElem; i++)
-    {
-        if (tb.vect[i])
-        {
-            printf("\nPoz %d", i);
-            parcurgereLista(tb.vect[i]);
-        }
-    }
-}
-
-void dezalocareLista(nod **cap)
+void dezalocare(nod **cap)
 {
     while (*cap)
     {
@@ -86,50 +63,63 @@ void dezalocareLista(nod **cap)
         free(tmp);
     }
 }
+int functieHash(int cod, hashT tabela)
+{
+    return cod % tabela.nrElem;
+}
 
-void dezalocreTabela(hashT tabela)
+void parcurgereT(hashT tabela)
 {
     for (int i = 0; i < tabela.nrElem; i++)
     {
-        if (tabela.vect[i] != NULL)
+        if (tabela.v[i])
         {
-            dezalocareLista(&tabela.vect[i]);
+            printf("\nPOZ %d", i);
+            parcurgere(tabela.v[i]);
         }
     }
-    free(tabela.vect);
 }
 
-void extrage(hashT tab, float *titular)
+void dezalocareT(hashT table)
 {
-    for (int i = 0; i < tab.nrElem; i++)
+    for (int i = 0; i < table.nrElem; i++)
     {
-        if (tab.vect[i] != NULL)
+        if (table.v[i])
         {
-            nod *tmp = tab.vect[i];
-            nod *p = NULL;
-            while (tmp != NULL)
+            dezalocare(&table.v[i]);
+        }
+    }
+}
+
+void stergere_conturi_bancare(hashT *tab, const char *titular)
+{
+    for (int i = 0; i < tab->nrElem; i++)
+    {
+        nod *current = tab->v[i];
+        nod *previous = NULL;
+
+        while (current != NULL)
+        {
+            if (strcmp(titular, current->inf.titular) == 0)
             {
-                if (strcmp(titular, tmp->inf.titular) == 0)
+                if (previous == NULL)
                 {
-                    p = tmp;
-                    tmp = tmp->next;
-                    if (p == tab.vect[i])
-                    {
-                        tab.vect[i] = tmp;
-                        free(p->inf.titular);
-                        free(p);
-                    }
-                    else
-                    {
-                        p->next = tmp;
-                        free(p->inf.titular);
-                        free(p);
-                    }
+                    tab->v[i] = current->next;
                 }
                 else
                 {
-                    tmp = tmp->next;
+
+                    previous->next = current->next;
                 }
+                nod *nextNode = current->next;
+                free(current->inf.titular);
+                free(current);
+                current = nextNode;
+            }
+            else
+            {
+                previous = current;
+                current = current->next;
             }
         }
     }
@@ -137,25 +127,26 @@ void extrage(hashT tab, float *titular)
 
 int main()
 {
+    int nr;
     FILE *f = fopen("Conturi.txt", "r");
     if (f == NULL)
     {
-        printf("NU SE POATE DESCHIDE FIS!");
+        printf("Fisierul nu s-a deschis");
         return 1;
     }
-
     hashT tabela;
     tabela.nrElem = 10;
-    tabela.vect = malloc(sizeof(nod *) * tabela.nrElem);
+    tabela.v = malloc(sizeof(nod *) * tabela.nrElem);
+
     for (int i = 0; i < tabela.nrElem; i++)
     {
-        tabela.vect[i] = NULL;
+        tabela.v[i] = NULL;
     }
-    int nr;
+
     fscanf(f, "%d", &nr);
     for (int i = 0; i < nr; i++)
     {
-        cont c;
+        cont_bancar c;
         fscanf(f, "%s", c.iban);
         char buffer[200];
         fscanf(f, " %[^\n]", buffer);
@@ -163,16 +154,16 @@ int main()
         strcpy(c.titular, buffer);
         fscanf(f, "%s", c.moneda);
         fscanf(f, "%f", &c.sold);
-        adaugareTabela(tabela, c);
+        int cod = c.moneda[0] + c.moneda[1] + c.moneda[2];
+        int poz = functieHash(cod, tabela);
+        tabela.v[poz] = inserare(tabela.v[poz], c);
     }
-    parcurgereTabela(tabela);
 
-    // sa se extrage numele titularilor CONTURILOR CARE AU UN SOLD MAI MIC DECAT CEL DAT
-    extrage(tabela, "Ionescu Georgica");
+    stergere_conturi_bancare(&tabela, "Popescu Iulian");
 
-    // DUPA EXTRAGERE
-    printf("\n DUPA EXTRAGERE\n");
-    parcurgereTabela(tabela);
-    dezalocreTabela(tabela);
-    return 0;
+    parcurgereT(tabela);
+    dezalocareT(tabela);
+    free(tabela.v);
+
+    fclose(f);
 }
