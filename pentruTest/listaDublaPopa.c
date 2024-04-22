@@ -2,233 +2,178 @@
 #include <string.h>
 #include <malloc.h>
 
-typedef struct cont_bancar
+typedef struct ContBancar
 {
     char iban[25];
-    char moneda[4];
     char *titular;
+    char moneda[4];
     float sold;
-} cont_bancar;
 
-typedef struct nod
+} ContBancar;
+
+typedef struct Nod
 {
-    struct nod *next;
-    struct nod *prev;
-    cont_bancar inf;
-} nod;
+    struct Nod *next;
+    struct Nod *prev;
+    ContBancar inf;
+} Nod;
+
+typedef struct ListaDubla
+{
+    Nod *u, *p;
+} ListaDubla;
 
 typedef struct IBAN
 {
     char iban[25];
 } IBAN;
 
-nod *inserare(nod *cap, cont_bancar b)
+void adauga(ListaDubla *lista, ContBancar c)
 {
-    nod *nou = malloc(sizeof(nod));
-    nou->inf = b;
-    nou->next = NULL;
-    nou->prev = NULL;
-    if (cap == NULL)
+    Nod *nou = malloc(sizeof(Nod));
+    nou->inf = c;
+    nou->next = nou->prev = NULL;
+    if (lista->p == NULL)
     {
-        return nou;
+        lista->p = lista->u = nou;
     }
-    nod *tmp = cap;
-    while (tmp->next != NULL)
+    else
     {
-        tmp = tmp->next;
+        lista->u->next = nou;
+        nou->prev = lista->u;
+        lista->u = nou;
     }
-    tmp->next = nou;
-    nou->prev = tmp;
-    return cap;
 }
 
-void dezalocareLista(nod **cap)
+void parcurge(ListaDubla l)
 {
-    while (*cap)
+    printf("\nNORMALA\n");
+    while (l.p)
     {
-        nod *tmp = *cap;
-        *cap = (*cap)->next;
+        printf("\nIban: %s, Titular:%s, Moneda:%s, SOLD:%.2f", l.p->inf.iban, l.p->inf.titular,
+               l.p->inf.moneda, l.p->inf.sold);
+        l.p = l.p->next;
+    }
+}
+void parcurgereInversa(ListaDubla l)
+{
+    printf("\nINVERSA\n");
+    while (l.u)
+    {
+        printf("\nIban: %s, Titular:%s, Moneda:%s, SOLD:%.2f", l.u->inf.iban, l.u->inf.titular,
+               l.u->inf.moneda, l.u->inf.sold);
+        l.u = l.u->prev;
+    }
+}
+
+void dezalocare(ListaDubla *l)
+{
+    Nod *tmp = l->p;
+    while (l->p)
+    {
+        tmp = l->p;
+        l->p = l->p->next;
         free(tmp->inf.titular);
         free(tmp);
     }
+    l->u = NULL;
 }
 
-void parcurgere(nod *cap)
-{
-    while (cap)
-    {
-        printf("\n%s\n%s\n%s\n%5.2f", cap->inf.iban, cap->inf.titular,
-               cap->inf.moneda, cap->inf.sold);
-        cap = cap->next;
-    }
-}
-
-// salvare conturi bancare cu aceeasi moneda
-// conturile bancare sunt stocate in lista dubla
-// functia intoarce vectorul: elemente de tip IBAN
-
-IBAN *salvareConturi(nod **cap, int nr, char *currency, int *n)
+IBAN *salvare_iban(ListaDubla *l, int *n, char *currency)
 {
     *n = 0;
-    nod *tmp = *cap;
-    IBAN *v = malloc(sizeof(IBAN) * nr);
-
-    while (tmp != NULL)
+    Nod *tmp = l->p;
+    while (tmp)
     {
         if (strcmp(tmp->inf.moneda, currency) == 0)
         {
-            strcpy(v[(*n)++].iban, tmp->inf.iban);
-            if (tmp->prev == NULL)
+            *n = *n + 1;
+        }
+        tmp = tmp->next;
+    }
+    IBAN *v = malloc(sizeof(IBAN) * (*n));
+    tmp = l->p;
+    int i = 0;
+    while (tmp)
+    {
+        Nod *next = tmp->next;
+        if (strcmp(tmp->inf.moneda, currency) == 0)
+        {
+            strcpy(v[i++].iban, tmp->inf.iban);
+            if (tmp->prev)
             {
-                (*cap) = (*cap)->next;
-                if ((*cap))
-                    (*cap)->prev = NULL;
-                free(tmp->inf.titular);
-                free(tmp);
-                tmp = *cap;
-            }
-            else if (tmp->next == NULL)
-            {
-                nod *p = tmp->prev;
-                p->next = NULL;
-                free(tmp->inf.titular);
-                free(tmp);
-                tmp = p;
+                tmp->prev->next = tmp->next;
             }
             else
             {
-                nod *prev = tmp->prev;
-                nod *next = tmp->next;
-                free(tmp->inf.titular);
-                free(tmp);
-                prev->next = next;
-                next->prev = prev;
-                tmp = next;
+                l->p = tmp->next;
             }
+            if (tmp->next)
+            {
+                tmp->next->prev = tmp->prev;
+            }
+            else
+            {
+                l->u = tmp->prev;
+            }
+            free(tmp->inf.titular);
+            free(tmp);
         }
-        else
-        {
-            tmp = tmp->next;
-        }
+        tmp = next;
     }
     return v;
 }
 
-void adaugare(nod **cap, float sold)
+void inserare(ListaDubla *l, int index, Nod *nou)
 {
-    nod *tmp = *cap;
-
-    while (tmp != NULL)
+    int i = 0;
+    Nod *current = l->p;
+    while (current)
     {
-        if (tmp->inf.sold >= sold)
+        Nod *next = current->next;
+        if (index == i)
         {
-            nod *nou = malloc(sizeof(nod));
-            nou->inf.titular = malloc(strlen(tmp->inf.titular) + 1);
-            strcpy(nou->inf.titular, tmp->inf.titular);
-            strcpy(nou->inf.iban, "INVALID");
-            strcpy(nou->inf.moneda, "N/A"); // Assuming currency is not relevant for the new node
-            nou->inf.sold = 0;              // Assuming 0 as the default sold for the new node
-            nou->next = NULL;
-            nou->prev = NULL;
-            // cap
-            if (tmp->prev == NULL)
+            if (current->prev == NULL)
             {
-                nod *temp = tmp;
-                tmp = tmp->next;
-                free(temp->inf.titular);
-                free(temp);
-                *cap = nou;
-                (*cap)->next = tmp;
-                if (tmp)
-                    tmp->prev = (*cap);
+                nou->next = l->p;
+                l->p->prev = nou;
+                l->p = nou;
+                nou->prev = NULL;
             }
-            // coada
-            else if (tmp->next == NULL)
+            else if (current->next == NULL)
             {
-                nod *p = NULL;
-                p = tmp->prev;
-                free(tmp->inf.titular);
-                free(tmp);
-                p->next = nou;
-                nou->prev = p;
-                tmp = NULL;
+                l->u->next = nou;
+                nou->prev = l->u;
+                l->u = nou;
+                l->u->next = NULL;
             }
             else
             {
-                nod *prev = tmp->prev;
-                nod *next = tmp->next;
-                free(tmp->inf.titular);
-                free(tmp);
-                prev->next = nou;
-                nou->prev = prev;
-                nou->next = next;
-                next->prev = nou;
-                tmp = nou;
+                current->prev->next = nou;
+                nou->prev = current->prev;
+                nou->next = current;
+                current->prev = nou;
             }
         }
-        else
-        {
-            tmp = tmp->next;
-        }
+        i++;
+        current = next;
     }
 }
 
-// interschimbare noduri
-void sortare(nod **cap)
+void stergere()
 {
-    int sortat = 0;
-    do
-    {
-        sortat = 0;
-        nod *tmp = *cap;
-        while (tmp->next != NULL)
-        {
-            if (tmp->inf.sold > tmp->next->inf.sold)
-            {
-                sortat = 1;
-                nod *p = tmp->next;
-                tmp->next = p->next;
-                p->prev = tmp->prev;
-
-                if (tmp->prev != NULL)
-                {
-                    tmp->prev->next = p;
-                }
-                else
-                {
-                    *cap = p;
-                }
-
-                if (p->next != NULL)
-                {
-                    p->next->prev = tmp;
-                }
-
-                p->next = tmp;
-                tmp->prev = p;
-
-                // Adjust 'tmp' to point to the node before 'p' to continue sorting from the correct position
-                tmp = p;
-            }
-            tmp = tmp->next;
-        }
-    } while (sortat);
 }
 
 int main()
 {
-    int nr;
-    nod *cap = NULL;
+    ListaDubla lista;
+    lista.u = lista.p = NULL;
     FILE *f = fopen("Conturi.txt", "r");
-    if (f == NULL)
-    {
-        printf("Fisierul nu s-a deschis");
-        return 1;
-    }
+    int nr;
     fscanf(f, "%d", &nr);
     for (int i = 0; i < nr; i++)
     {
-        cont_bancar c;
+        ContBancar c;
         fscanf(f, "%s", c.iban);
         char buffer[200];
         fscanf(f, " %[^\n]", buffer);
@@ -236,21 +181,28 @@ int main()
         strcpy(c.titular, buffer);
         fscanf(f, "%s", c.moneda);
         fscanf(f, "%f", &c.sold);
-        cap = inserare(cap, c);
+        adauga(&lista, c);
     }
-    fclose(f);
+    parcurge(lista);
+    parcurgereInversa(lista);
 
-    // int nrElemVector;
-    // IBAN* v = salvareConturi(&cap, nr, "RON", &nrElemVector);
-    // printf("\nAFISARE VECTOR:");
-    // for (int i = 0; i < nrElemVector; i++)
-    //{
-    //	printf("\n%s ", v[i].iban);
-    // }
-    // free(v);
-    // printf("\n  ------ AFISARE LISTA ------ \n");
-    sortare(&cap);
-    parcurgere(cap);
-    dezalocareLista(&cap);
-    return 0;
+    /*printf("\nIBAN:");
+    int n = 0;
+    IBAN* v = salvare_iban(&lista, &n, "EUR");
+    for (int i = 0; i < n; i++) {
+        printf("%s ", v[i].iban);
+    }*/
+
+    Nod *nou = malloc(sizeof(Nod));
+    ContBancar c;
+    strcpy(c.iban, "RO123232BCR");
+    c.titular = malloc(strlen("ANDREI SERBAN") + 1);
+    strcpy(c.titular, "ANDREI SERBAN");
+    strcpy(c.moneda, "EUR");
+    c.sold = 1000;
+    nou->inf = c;
+    nou->next = nou->prev = NULL;
+    inserare(&lista, 1, nou);
+    parcurge(lista);
+    dezalocare(&lista);
 }
