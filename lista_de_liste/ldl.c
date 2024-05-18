@@ -82,6 +82,27 @@ nodLP *inserareLP(nodLP *cap, nodLS *l)
     tmp->next = nou;
 }
 
+void dezalocareLS(nodLS **cap)
+{
+    while (*cap)
+    {
+        nodLS *temp = *cap;
+        *cap = (*cap)->next;
+        free(temp->inf.denumire);
+        free(temp);
+    }
+}
+void dezalocareLP(nodLP **cap)
+{
+    while (*cap)
+    {
+        nodLP *temp = *cap;
+        *cap = (*cap)->next;
+        dezalocareLS(&temp->inf);
+        free(temp);
+    }
+}
+
 int main()
 {
     nodLP *cap = NULL;
@@ -105,9 +126,15 @@ int main()
             l2 = inserareLS(l2, p);
     }
 
+    fclose(f);
     cap = inserareLP(cap, l1);
     cap = inserareLP(cap, l2);
 
+    traversareLP(cap);
+
+    dezalocareLP(&cap);
+    l1 = NULL;
+    l2 = NULL;
     traversareLP(cap);
 
     return 0;
