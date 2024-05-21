@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define HTABLE_SIZE 200
-
 struct ContBancar
 {
     char iban[25];  // 24 bytes pt iban + 1 byte terminator string
@@ -108,6 +106,74 @@ int cautareDupaKey(NodABC *root, ContBancar *c, unsigned short int key)
     }
 }
 
+// trateaza cazul in care cheia nu exista in arbore retunrand -1
+
+int numaraDrumInvers(NodABC *root, unsigned short int key)
+{
+    if (root)
+    {
+        if (root->cheie == key)
+        {
+            return 1;
+        }
+        else if (key < root->cheie)
+        {
+            return 1 + numaraDrumInvers(root->st, key);
+        }
+        else
+        {
+            return 1 + numaraDrumInvers(root->dr, key);
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int existaCheie(NodABC *root, unsigned short int key)
+{
+    if (root)
+    {
+        if (root->cheie == key)
+        {
+            return 1;
+        }
+        else if (key < root->cheie)
+        {
+            return existaCheie(root->st, key);
+        }
+        else
+        {
+            return existaCheie(root->dr, key);
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void cautareDupaDrumInvers(NodABC *root, unsigned short int key, unsigned short int *drum, int *n)
+{
+    if (root)
+    {
+        drum[*n] = root->cheie;
+        (*n)++;
+        if (root->cheie == key)
+        {
+            return;
+        }
+        else if (key < root->cheie)
+        {
+            cautareDupaDrumInvers(root->st, key, drum, n);
+        }
+        else
+        {
+            cautareDupaDrumInvers(root->dr, key, drum, n);
+        }
+    }
+}
 void cautareDupaIBAN(NodABC *root, ContBancar *c, char iban[25], int *ok)
 {
     if (root)
@@ -195,6 +261,32 @@ int main()
     {
         printf("\nNU a fost gasit un cont cu acel IBAN!");
     }
+
+    int nr;
+
+    int cheie = 61;
+    ok = existaCheie(root, cheie);
+
+    if (ok > 0)
+    {
+        nr = numaraDrumInvers(root, cheie);
+        printf("\nNumarul de noduri pe drumul invers este: %d", nr);
+        unsigned short int *drum = (unsigned short int *)malloc(nr * sizeof(unsigned short int));
+        int n = 0;
+        cautareDupaDrumInvers(root, cheie, drum, &n);
+        printf("\nDrumul invers este: ");
+
+        for (int i = 0; i < n; i++)
+        {
+            printf("%d ", drum[i]);
+        }
+        free(drum);
+    }
+    else
+    {
+        printf("\nNu exista drum invers!");
+    }
+
     // TODO: dezalocare ABC
 
     dezalocareArbore(&root);
