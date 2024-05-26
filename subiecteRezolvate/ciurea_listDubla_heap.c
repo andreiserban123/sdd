@@ -151,7 +151,7 @@ void filtrare(heap h, int index)
     {
         float st = (h.vect[indexSt].nrBileteVandute) / (float)h.vect[indexSt].capacitate;
         float rad = h.vect[indexRad].nrBileteVandute / (float)h.vect[indexRad].capacitate;
-        if (st > rad)
+        if (st < rad)
         {
             indexRad = indexSt;
         }
@@ -160,7 +160,7 @@ void filtrare(heap h, int index)
     {
         float dr = h.vect[indexDr].nrBileteVandute / (float)h.vect[indexDr].capacitate;
         float rad = h.vect[indexRad].nrBileteVandute / (float)h.vect[indexRad].capacitate;
-        if (dr > rad)
+        if (dr < rad)
         {
             indexRad = indexDr;
         }
@@ -171,6 +171,22 @@ void filtrare(heap h, int index)
         h.vect[index] = h.vect[indexRad];
         h.vect[indexRad] = tmp;
         filtrare(h, indexRad);
+    }
+}
+
+void modificaNrBilete(heap h, int nrVagon, int nrBilete)
+{
+    for (int i = 0; i < h.nrElem; i++)
+    {
+        if (h.vect[i].numarVangon == nrVagon)
+        {
+            h.vect[i].nrBileteVandute = nrBilete;
+        }
+    }
+
+    for (int i = (h.nrElem - 1) / 2; i >= 0; i--)
+    {
+        filtrare(h, i);
     }
 }
 
@@ -228,6 +244,15 @@ int main()
     }
 
     printf("\n\nHeap:\n");
+    for (int i = 0; i < h.nrElem; i++)
+    {
+        printf("\nNr vagon: %d , firma: %s, bilete:%d , capacitate:%d",
+               h.vect[i].numarVangon, h.vect[i].firmaTransport,
+               h.vect[i].nrBileteVandute, h.vect[i].capacitate);
+    }
+
+    modificaNrBilete(h, 2, 10);
+    printf("\n\nHeap dupa modif:\n");
     for (int i = 0; i < h.nrElem; i++)
     {
         printf("\nNr vagon: %d , firma: %s, bilete:%d , capacitate:%d",
