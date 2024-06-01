@@ -1,0 +1,6 @@
+5
+12/03/2003 PopaElena Oncologie Bolnav 2000
+04/03/2003 PopescuDorina Pediatrie Sanatos 400
+02/06/2003 PopescuDana Oncologie Bolnav 1000
+12/06/2004 DobrescuVlad Neurologie Sanatos 3000
+12/06/2005 SerbanAndrei Neurologie Bolnav 300
