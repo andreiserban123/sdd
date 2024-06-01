@@ -1,0 +1,20 @@
+1
+Matei Corvin
+12/07/2025
+100.0
+2
+Toma Marinescu
+12/05/2026
+40.6
+3
+Toma Marinescu
+05/03/2024
+400.0
+4
+Alex Georgescu
+06/08/2028
+23.0
+5
+Andrei Selaru
+05/07/2020
+300.0
