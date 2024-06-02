@@ -1,204 +1,248 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <stdbool.h>
 #include <malloc.h>
 #include <string.h>
 
-typedef struct Cofetarie Cofetarie;
-typedef struct Nod Nod;
+typedef struct Carte Carte;
+typedef struct nod nod;
 
-struct Cofetarie
+struct Carte
 {
     int id;
     char *nume;
+    int nrPagini;
 };
 
-struct Nod
+struct nod
 {
-    Cofetarie info;
-    Nod *stanga;
-    Nod *dreapta;
+    Carte info;
+    nod *st;
+    nod *dr;
 };
 
-Cofetarie initializareCofetarie(int id, char *nume)
+Carte initializare(int id, char *nume, int nrPagini)
 {
-    Cofetarie c;
-    c.id = id;
-    c.nume = (char *)malloc(sizeof(char) * (strlen(nume) + 1));
-    strcpy(c.nume, nume);
-    return c;
+    Carte carte;
+    carte.id = id;
+    carte.nrPagini = nrPagini;
+    carte.nume = (char *)malloc(sizeof(char) * (strlen(nume) + 1));
+    strcpy(carte.nume, nume);
+    return carte;
 }
 
-void afisareCofetarie(Cofetarie c)
+void afisareCarte(Carte carte)
 {
-    printf("\n Cofetaria %s are id-ul %d", c.nume, c.id);
+    printf("\nCartea %s are %d pagini si id-ul %d", carte.nume, carte.nrPagini, carte.id);
 }
 
-void inserareArbore(Cofetarie c, Nod **radacina)
+void parcurgerePreOrdine(nod *radacina)
 {
-    if (*radacina == NULL)
+    if (radacina)
     {
-        Nod *nou = (Nod *)malloc(sizeof(Nod));
-        nou->info = c;
-        nou->dreapta = NULL;
-        nou->stanga = NULL;
-        *radacina = nou;
+        afisareCarte(radacina->info);
+        parcurgerePreOrdine(radacina->st);
+        parcurgerePreOrdine(radacina->dr);
+    }
+}
+int calculInaltime(nod *rad)
+{
+    if (rad != NULL)
+    {
+        int st = calculInaltime(rad->st);
+        int dr = calculInaltime(rad->dr);
+
+        if (st > dr)
+            return st + 1;
+        else
+            return dr + 1;
     }
     else
     {
-        if (c.id > (*radacina)->info.id)
-            inserareArbore(c, &(*radacina)->dreapta);
-        else
-            inserareArbore(c, &(*radacina)->stanga);
+        return 0;
     }
 }
 
-void afisareInOrdine(Nod *radacina)
+int diferentaInaltime(nod *rad)
 {
-    // afisare In ordine : Stanga,Radacina,Dreapta
-    if (radacina != NULL)
+    if (rad != NULL)
     {
-        afisareInOrdine(radacina->stanga);
-        afisareCofetarie(radacina->info);
-        afisareInOrdine(radacina->dreapta);
+        return calculInaltime(rad->st) - calculInaltime(rad->dr);
     }
-}
-void afisarePreOrdine(Nod *radacina)
-{
-    // Afisare preordine : Radacina,Stanga,Dreapta
-    if (radacina != NULL)
+    else
     {
-        afisareCofetarie(radacina->info);
-        afisarePreOrdine(radacina->stanga);
-        afisarePreOrdine(radacina->dreapta);
+        return 0;
     }
 }
 
-void dezalocareArbore(Nod **radacina)
+void rotireLaDreapta(nod **rad)
 {
-    if (*radacina)
-    {
-        dezalocareArbore(&(*radacina)->stanga);
-        dezalocareArbore(&(*radacina)->dreapta);
-        free((*radacina)->info.nume);
-        free(*radacina);
-    }
-    *radacina = NULL;
+
+    nod *aux = (*rad)->st;
+    (*rad)->st = aux->dr;
+    aux->dr = *rad;
+    *rad = aux;
+}
+void rotireLaStanga(nod **rad)
+{
+    nod *aux = (*rad)->dr;
+    (*rad)->dr = aux->st;
+    aux->st = *rad;
+    *rad = aux;
 }
 
-void cautareDupaId(Cofetarie *c, Nod *radacina, int idCautat)
+nod *findMin(nod *rad)
 {
-
-    if (radacina)
+    while (rad->st)
     {
-        if (radacina->info.id == idCautat)
-            *c = initializareCofetarie(idCautat, radacina->info.nume);
+        rad = rad->st;
+    }
+    return rad;
+}
+
+nod *stergeDupaId(nod *rad, int id)
+{
+    if (rad == NULL)
+        return rad;
+
+    if ((rad)->info.id == id)
+    {
+
+        if ((rad)->st == NULL)
+        {
+
+            nod *tmp = rad->dr;
+            free(rad->info.nume);
+            free(rad);
+            return tmp;
+        }
+        else if ((rad)->dr == NULL)
+        {
+            nod *tmp = rad->st;
+            free(rad->info.nume);
+            free(rad);
+            return tmp;
+        }
         else
         {
-            if (idCautat < radacina->info.id)
-            {
-                cautareDupaId(c, radacina->stanga, idCautat);
-            }
-            else
-            {
-                cautareDupaId(c, radacina->dreapta, idCautat);
-            }
+            nod *aux = findMin(rad->dr);
+            free(rad->info.nume);
+
+            rad->info = aux->info;
+            rad->info.nume = malloc(strlen(aux->info.nume) + 1);
+            strcpy(rad->info.nume, aux->info.nume);
+
+            rad->dr = stergeDupaId(rad->dr, aux->info.id);
         }
     }
-    else
-        *c = initializareCofetarie(-1, "");
-}
-
-int calculInaltime(Nod *radacina)
-{
-    if (radacina)
+    else if (id < rad->info.id)
     {
-        int inaltimeS = calculInaltime(radacina->stanga);
-        int inaltimeD = calculInaltime(radacina->dreapta);
-
-        if (inaltimeD > inaltimeS)
-            return inaltimeD + 1;
-        else
-            return inaltimeS + 1;
+        rad->st = stergeDupaId(rad->st, id);
     }
     else
     {
-        return 0;
+        rad->dr = stergeDupaId(rad->dr, id);
     }
+    return rad;
 }
 
-void rotireLaStanga(Nod **radacina)
+void insertABC(nod **rad, Carte c)
 {
-    Nod *aux = (*radacina)->dreapta;
-    (*radacina)->dreapta = aux->stanga;
-    aux->stanga = *radacina;
-    *radacina = aux;
-}
-
-void rotireLaDreapta(Nod **radacina)
-{
-    Nod *aux = (*radacina)->stanga;
-    (*radacina)->stanga = aux->dreapta;
-    aux->dreapta = *radacina;
-    *radacina = aux;
-}
-
-int calculDezechilibru(Nod *radacina)
-{
-    if (radacina)
+    if (*rad == NULL)
     {
-        return calculInaltime(radacina->stanga) - calculInaltime(radacina->dreapta);
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-void inserareInAVL(Cofetarie c, Nod **radacina)
-{
-    if (*radacina == NULL)
-    {
-        Nod *nou = (Nod *)malloc(sizeof(Nod));
+        nod *nou = malloc(sizeof(nod));
         nou->info = c;
-        nou->dreapta = NULL;
-        nou->stanga = NULL;
-        *radacina = nou;
+        nou->st = nou->dr = NULL;
+        *rad = nou;
+    }
+    else if (c.id < (*rad)->info.id)
+    {
+        insertABC(&(*rad)->st, c);
     }
     else
     {
-        if (c.id > (*radacina)->info.id)
-            inserareArbore(c, &(*radacina)->dreapta);
-        else
-            inserareArbore(c, &(*radacina)->stanga);
+        insertABC(&(*rad)->dr, c);
+    }
+}
+
+void inserareInArboreAVL(nod **rad, Carte c)
+{
+    if (*rad == NULL)
+    {
+        nod *nou = malloc(sizeof(nod));
+        nou->info = c;
+        nou->st = nou->dr = NULL;
+        *rad = nou;
+    }
+    else if (c.id < (*rad)->info.id)
+    {
+        inserareInArboreAVL(&(*rad)->st, c);
+    }
+    else
+    {
+        inserareInArboreAVL(&(*rad)->dr, c);
     }
 
-    int dezechilibru = calculDezechilibru(*radacina);
-    if (dezechilibru == -2)
+    int dif = diferentaInaltime(*rad);
+    if (dif == 2)
     {
-        // dezechilibru pe partea dreapta
-        if (calculDezechilibru((*radacina)->dreapta == 1))
-            rotireLaDreapta(&(*radacina)->dreapta);
-        rotireLaStanga(radacina);
+        // dezechilbru pe st
+        if (diferentaInaltime((*rad)->st) == -1)
+        {
+            rotireLaStanga(&(*rad)->st);
+        }
+        rotireLaDreapta(rad);
     }
-    if (dezechilibru == 2)
+    if (dif == -2)
     {
-        // dezechilibru pe partea stanga
-        if (calculDezechilibru((*radacina)->stanga == -1))
-            rotireLaStanga(&(*radacina)->stanga);
-        rotireLaDreapta(radacina);
+        // dezechilibru pe dr
+        if (diferentaInaltime((*rad)->dr) == 1)
+        {
+            rotireLaDreapta(&(*rad)->dr);
+        }
+        rotireLaStanga(rad);
     }
+}
+
+void transformare(nod *rad, nod **radAVL)
+{
+    if (rad)
+    {
+        transformare(rad->st, radAVL);
+        Carte c = rad->info;
+        c.nume = malloc(strlen(rad->info.nume) + 1);
+        strcpy(c.nume, rad->info.nume);
+        inserareInArboreAVL(radAVL, c);
+        transformare(rad->dr, radAVL);
+    }
+}
+
+void dezalocareARB(nod **rad)
+{
+    if (*rad)
+    {
+        dezalocareARB(&(*rad)->st);
+        dezalocareARB(&(*rad)->dr);
+
+        free((*rad)->info.nume);
+        free((*rad));
+    }
+    *rad = NULL;
 }
 
 void main()
 {
-    Nod *radacina = NULL;
-    inserareInAVL(initializareCofetarie(5, "Ana"), &radacina);
-    inserareInAVL(initializareCofetarie(4, "Amalia"), &radacina);
-    inserareInAVL(initializareCofetarie(7, "Andreea"), &radacina);
-    inserareInAVL(initializareCofetarie(6, "Ina"), &radacina);
-    inserareInAVL(initializareCofetarie(9, "Raluca"), &radacina);
-    inserareInAVL(initializareCofetarie(8, "Anna"), &radacina);
+    nod *radacina = NULL;
+    insertABC(&radacina, initializare(1, "Morometii", 260));
+    insertABC(&radacina, initializare(2, "Baltagul", 100));
+    insertABC(&radacina, initializare(3, "Amintiri din Copilarie", 380));
+    insertABC(&radacina, initializare(4, "Ion", 120));
+    insertABC(&radacina, initializare(5, "Enigma Otiliei", 300));
 
-    afisareInOrdine(radacina);
-    afisarePreOrdine(radacina);
+    nod *avl = NULL;
+    transformare(radacina, &avl);
+    avl = stergeDupaId(avl, 2);
+    dezalocareARB(&radacina);
+    parcurgerePreOrdine(avl);
+    dezalocareARB(&avl);
 }
