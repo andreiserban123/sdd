@@ -33,7 +33,58 @@ void inserare(nodArb **rad, student s)
             inserare(&(*rad)->dr, s);
     }
 }
+// nodArb *stergeNod(nodArb *rad, int key)
+// {
+//     if (rad == NULL)
+//     {
+//         return rad;
+//     }
 
+//     if (rad->inf.numarFotografii == key)
+//     {
+//         nodArb *tmp;
+//         if (rad->st == NULL)
+//         {
+//             tmp = rad->dr;
+//             free(rad->inf.denumireAlbum);
+//             free(rad->inf.emailUtilizator);
+//             free(rad);
+//             return tmp;
+//         }
+//         else if (rad->dr == NULL)
+//         {
+//             tmp = rad->st;
+//             free(rad->inf.denumireAlbum);
+//             free(rad->inf.emailUtilizator);
+//             free(rad);
+//             return tmp;
+//         }
+//         else
+//         {
+//             tmp = findMin(rad->dr); // cel mai mic din dreapta
+
+//             free(rad->inf.denumireAlbum);
+//             free(rad->inf.emailUtilizator);
+
+//             rad->inf = tmp->inf;
+//             rad->inf.emailUtilizator = malloc(strlen(tmp->inf.emailUtilizator) + 1);
+//             strcpy(rad->inf.emailUtilizator, tmp->inf.emailUtilizator);
+//             rad->inf.denumireAlbum = malloc(strlen(tmp->inf.denumireAlbum) + 1);
+//             strcpy(rad->inf.denumireAlbum, tmp->inf.denumireAlbum);
+//             rad->dr = stergeNod(rad->dr, tmp->inf.numarFotografii);
+//         }
+//     }
+//     else if (key < rad->inf.numarFotografii)
+//     {
+//         rad->st = stergeNod(rad->st, key);
+//     }
+//     else if (key > rad->inf.numarFotografii)
+//     {
+//         rad->dr = stergeNod(rad->dr, key);
+//     }
+
+//     return rad;
+// }
 void afisareInOrdine(nodArb *rad)
 {
     if (rad != NULL)
