@@ -284,9 +284,11 @@ void savingCirculare(nodARB *rad, LD *lista)
     if (rad)
     {
         nodLD *nou = malloc(sizeof(nodLD));
+        // saving info
         nou->info = rad->info;
         nou->info.denumire = malloc(strlen(rad->info.denumire) + 1);
         strcpy(nou->info.denumire, rad->info.denumire);
+        // saving info
 
         if (lista->prim == NULL)
         {
