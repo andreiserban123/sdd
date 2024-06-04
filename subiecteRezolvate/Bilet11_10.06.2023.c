@@ -12,48 +12,196 @@ typedef struct Fotografie
 
 } Fotografie;
 
-typedef struct nod
+typedef struct
 {
     Fotografie inf;
-    struct nod *st, *dr;
+    struct nodARB *st, *dr;
+} nodARB;
 
-} nod;
-
-void inserare(nod **rad, Fotografie p)
+void insertARB(nodARB **rad, Fotografie fot)
 {
     if (*rad == NULL)
     {
-        nod *nou = malloc(sizeof(nod));
-        nou->inf = p;
+        nodARB *nou = malloc(sizeof(nodARB));
+        nou->inf = fot;
         nou->st = nou->dr = NULL;
         *rad = nou;
     }
-    else
+    else if ((*rad)->inf.idFotografie > fot.idFotografie)
     {
-        if (p.idFotografie < (*rad)->inf.idFotografie)
-            inserare(&(*rad)->st, p);
-        else
-            inserare(&(*rad)->dr, p);
+        insertARB(&(*rad)->st, fot);
+    }
+    else
+        insertARB(&(*rad)->dr, fot);
+}
+
+void traversarePreOrdine(nodARB *rad)
+{
+    if (rad)
+    {
+        printf("%d %s %s %.2f\n", rad->inf.idFotografie, rad->inf.oras, rad->inf.data, rad->inf.rezolutie);
+        traversarePreOrdine(rad->st);
+        traversarePreOrdine(rad->dr);
     }
 }
 
-void afisareInOrdine(nod *rad)
+void nrFotografii(nodARB *rad, int *nr, char *oras)
+{
+    if (rad)
+    {
+        if (strcmp(rad->inf.oras, oras) == 0)
+        {
+            (*nr)++;
+        }
+        nrFotografii(rad->st, nr, oras);
+        nrFotografii(rad->dr, nr, oras);
+    }
+}
+
+void traversarePostOrdine(nodARB *rad)
+{
+    if (rad)
+    {
+        traversarePostOrdine(rad->st);
+        traversarePostOrdine(rad->dr);
+        printf("%d %s %s %.2f\n", rad->inf.idFotografie, rad->inf.oras, rad->inf.data, rad->inf.rezolutie);
+    }
+}
+
+void schimbaData(nodARB *rad, int id, char *data)
+{
+    if (rad == NULL)
+    {
+        return;
+    }
+    if (rad->inf.idFotografie == id)
+    {
+        free(rad->inf.data);
+        rad->inf.data = malloc(strlen(data) + 1);
+        strcpy(rad->inf.data, data);
+    }
+    else if (id < rad->inf.idFotografie)
+    {
+        schimbaData(rad->st, id, data);
+    }
+    else
+    {
+        schimbaData(rad->dr, id, data);
+    }
+}
+
+nodARB *findMin(nodARB *rad)
+{
+    while (rad->st)
+        rad = rad->st;
+    return rad;
+}
+
+void getNrPhoto(nodARB *rad, float rez, int *nr)
+{
+    if (rad)
+    {
+        if (rad->inf.rezolutie == rez)
+        {
+            (*nr)++;
+        }
+        getNrPhoto(rad->st, rez, nr);
+        getNrPhoto(rad->dr, rez, nr);
+    }
+}
+
+void populareVect(nodARB *rad, Fotografie *v, int *i, float rez)
+{
+    if (rad)
+    {
+        if (rad->inf.rezolutie == rez)
+        {
+            v[(*i)] = rad->inf;
+            v[(*i)].oras = malloc(strlen(rad->inf.oras) + 1);
+            strcpy(v[(*i)].oras, rad->inf.oras);
+            v[(*i)].data = malloc(strlen(rad->inf.data) + 1);
+            strcpy(v[(*i)].data, rad->inf.data);
+            (*i)++;
+        }
+        populareVect(rad->st, v, i, rez);
+        populareVect(rad->dr, v, i, rez);
+    }
+}
+
+Fotografie *salveazaVec(nodARB *rad, float rez, int *n)
+{
+    int nr = 0;
+    getNrPhoto(rad, rez, &nr);
+    Fotografie *v = malloc(sizeof(Fotografie) * nr);
+    int i = 0;
+    *n = nr;
+    populareVect(rad, v, &i, rez);
+    return v;
+}
+
+nodARB *stergeNodDupaId(nodARB *rad, int id)
+{
+    if (rad == NULL)
+        return rad;
+    else if (rad->inf.idFotografie == id)
+    {
+        if (rad->st == NULL)
+        {
+            nodARB *tmp = rad->dr;
+            free(rad->inf.oras);
+            free(rad->inf.data);
+            free(rad);
+            return tmp;
+        }
+        else if (rad->dr == NULL)
+        {
+            nodARB *tmp = rad->st;
+            free(rad->inf.oras);
+            free(rad->inf.data);
+            free(rad);
+            return tmp;
+        }
+        else
+        {
+            nodARB *tmp = findMin(rad->dr);
+            free(rad->inf.data);
+            free(rad->inf.oras);
+            rad->inf = tmp->inf;
+            // deep copy
+            rad->inf.oras = malloc(strlen(tmp->inf.oras) + 1);
+            strcpy(rad->inf.oras, tmp->inf.oras);
+            rad->inf.data = malloc(strlen(tmp->inf.data) + 1);
+            strcpy(rad->inf.data, tmp->inf.data);
+            rad->dr = stergeNodDupaId(rad->dr, tmp->inf.idFotografie);
+        }
+    }
+    else if (id < rad->inf.idFotografie)
+    {
+        rad->st = stergeNodDupaId(rad->st, id);
+    }
+    else
+    {
+        rad->dr = stergeNodDupaId(rad->dr, id);
+    }
+    return rad;
+}
+
+void afisareInOrdine(nodARB *rad)
 {
     if (rad)
     {
         afisareInOrdine(rad->st);
-        printf("\n id:%u, oras:%s, data:%s, rezolutie:%.2f", rad->inf.idFotografie,
-               rad->inf.oras, rad->inf.data, rad->inf.rezolutie);
+        printf("%d %s %s %.2f\n", rad->inf.idFotografie, rad->inf.oras, rad->inf.data, rad->inf.rezolutie);
         afisareInOrdine(rad->dr);
     }
 }
 
-void dezalocare(nod **rad)
+void dezalocareARB(nodARB **rad)
 {
     if (*rad)
     {
-        dezalocare(&(*rad)->st);
-        dezalocare(&(*rad)->dr);
+        dezalocareARB(&(*rad)->st);
+        dezalocareARB(&(*rad)->dr);
         free((*rad)->inf.oras);
         free((*rad)->inf.data);
         free(*rad);
@@ -61,205 +209,53 @@ void dezalocare(nod **rad)
     *rad = NULL;
 }
 
-void cautaDupaOras(nod *rad, char *nume, int *nr)
+int main()
 {
-    if (rad)
+    FILE *f = fopen("Bilet11_10.06.2023.txt", "r");
+    if (!f)
     {
-        if (strcmp(rad->inf.oras, nume) == 0)
-        {
-            *nr = *nr + 1;
-        }
-        cautaDupaOras(rad->st, nume, nr);
-        cautaDupaOras(rad->dr, nume, nr);
+        printf("Fisierul nu exista");
+        return 1;
     }
-}
 
-void cautaDupaRez(nod *rad, float rez, int *nr)
-{
-    if (rad)
+    nodARB *rad = NULL;
+    Fotografie fot;
+    char buffer[100];
+    while (fscanf(f, "%d", &fot.idFotografie) == 1)
     {
-        if (rad->inf.rezolutie == rez)
-        {
-            *nr = *nr + 1;
-        }
-        cautaDupaRez(rad->st, rez, nr);
-        cautaDupaRez(rad->dr, rez, nr);
-    }
-}
+        fscanf(f, " %[^\n]", buffer);
+        fot.oras = malloc((strlen(buffer) + 1) * sizeof(char));
+        strcpy(fot.oras, buffer);
+        fscanf(f, " %[^\n]", buffer);
+        fot.data = malloc((strlen(buffer) + 1) * sizeof(char));
+        strcpy(fot.data, buffer);
+        fscanf(f, "%f", &fot.rezolutie);
 
-void schimbaData(nod *rad, unsigned int key, char *nouaData)
-{
-    if (rad)
-    {
-        if (rad->inf.idFotografie == key)
-        {
-            free(rad->inf.data);
-            rad->inf.data = malloc(strlen(nouaData) + 1);
-            strcpy(rad->inf.data, nouaData);
-        }
-        else
-        {
-            if (key < rad->inf.idFotografie)
-                schimbaData(rad->st, key, nouaData);
-            else
-                schimbaData(rad->dr, key, nouaData);
-        }
+        insertARB(&rad, fot);
     }
-}
-
-void stergeRadacina(nod **rad)
-{
-    if (*rad == NULL)
-        return;
-
-    nod *temp;
-    // Case 1: No child
-    if ((*rad)->st == NULL && (*rad)->dr == NULL)
-    {
-        free((*rad)->inf.oras);
-        free((*rad)->inf.data);
-        free(*rad);
-        *rad = NULL;
-    }
-    // Case 2: One child (right child only)
-    else if ((*rad)->st == NULL)
-    {
-        temp = *rad;
-        *rad = (*rad)->dr;
-        free(temp->inf.oras);
-        free(temp->inf.data);
-        free(temp);
-    }
-    // Case 3: One child (left child only)
-    else if ((*rad)->dr == NULL)
-    {
-        temp = *rad;
-        *rad = (*rad)->st;
-        free(temp->inf.oras);
-        free(temp->inf.data);
-        free(temp);
-    }
-    // Case 4: Two children
-    else
-    {
-        nod *parent = NULL;
-        nod *successor = (*rad)->dr;
-
-        // Find the inorder successor (smallest in the right subtree)
-        while (successor->st != NULL)
-        {
-            parent = successor;
-            successor = successor->st;
-        }
-
-        // Replace root's data with successor's data
-        free((*rad)->inf.oras);
-        free((*rad)->inf.data);
-        (*rad)->inf = successor->inf;
-
-        // Fix the successor's parent's child
-        if (parent != NULL)
-        {
-            if (successor->dr != NULL)
-                parent->st = successor->dr;
-            else
-                parent->st = NULL;
-        }
-        else
-        {
-            // Special case: the direct right child of the root was the inorder successor
-            (*rad)->dr = successor->dr;
-        }
-        free(successor);
-    }
-}
-
-void creeareVector(nod *rad, Fotografie *v, float rez, int *i)
-{
-    if (rad)
-    {
-        if (rad->inf.rezolutie == rez)
-        {
-            Fotografie f;
-            f = rad->inf;
-            f.oras = malloc(strlen(rad->inf.oras) + 1);
-            strcpy(f.oras, rad->inf.oras);
-            f.data = malloc(strlen(rad->inf.data) + 1);
-            strcpy(f.data, rad->inf.data);
-            v[(*i)++] = f;
-        }
-        creeareVector(rad->st, v, rez, i);
-        creeareVector(rad->dr, v, rez, i);
-    }
-}
-
-void main()
-{
-    int nrPoz;
-    nod *rad = NULL;
-    FILE *f = fopen("fisier.txt", "r");
-    fscanf(f, "%d", &nrPoz);
-    char buffer[200];
-    Fotografie p;
-    for (int i = 0; i < nrPoz; i++)
-    {
-        fscanf(f, "%u", &p.idFotografie);
-        fscanf(f, "%s", buffer);
-        p.oras = malloc(strlen(buffer) + 1);
-        strcpy(p.oras, buffer);
-        fscanf(f, "%s", buffer);
-        p.data = malloc(strlen(buffer) + 1);
-        strcpy(p.data, buffer);
-        fscanf(f, "%f", &p.rezolutie);
-        inserare(&rad, p);
-    }
+    fclose(f);
+    traversarePreOrdine(rad);
 
     int nr = 0;
-    cautaDupaOras(rad, "Cluj", &nr);
-    if (nr == 0)
-    {
-        printf("\nOrasul nu exista in lista de poze!");
-    }
-    else
-    {
-        printf("\nExista %d poze in orasul respectiv!", nr);
-    }
-
-    schimbaData(rad, 25, "02/06/2003");
-
-    printf("\nBefore deleting the root node:\n");
+    nrFotografii(rad, &nr, "Paris");
+    printf("\nNR de poze in paris: %d\n", nr);
+    schimbaData(rad, 3, "02/06/2003");
+    traversarePreOrdine(rad);
+    rad = stergeNodDupaId(rad, rad->inf.idFotografie);
+    printf("\n\n");
     afisareInOrdine(rad);
-
-    // Delete the root node
-    stergeRadacina(&rad);
-
-    printf("\nAfter deleting the root node:\n");
-    afisareInOrdine(rad);
-
-    nr = 0;
-    float rez = 400.0;
-    cautaDupaRez(rad, rez, &nr);
-
-    if (nr == 0)
+    Fotografie *v = NULL;
+    int n = 0;
+    v = salveazaVec(rad, 200, &n);
+    printf("\n\n");
+    for (int i = 0; i < n; i++)
     {
-        printf("\nNU exista poze cu rezolutia specificata!");
+        printf("%d %s %s %.2f\n", v[i].idFotografie, v[i].oras, v[i].data, v[i].rezolutie);
+        free(v[i].oras);
+        free(v[i].data);
     }
-    else
-    {
-        Fotografie *v = malloc(sizeof(Fotografie) * nr);
-        int i = 0;
-        creeareVector(rad, v, 400.0, &i);
-        printf("\n\nVector:");
-        for (int i = 0; i < nr; i++)
-        {
-            printf("\n id:%u, oras:%s, data:%s, rezolutie:%.2f", v[i].idFotografie,
-                   v[i].oras, v[i].data, v[i].rezolutie);
-        }
-    }
-
-    // Deallocate memory
-    dezalocare(&rad);
-    afisareInOrdine(rad);
-
-    fclose(f);
+    free(v);
+    v = NULL;
+    dezalocareARB(&rad);
+    return 0;
 }
