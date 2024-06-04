@@ -1,0 +1,36 @@
+Laptop
+24
+1
+TechService
+Fridge
+36
+1
+TechFix
+Sofa
+12
+0
+FurnitureFix
+Microwave
+18
+1
+FurnitureService
+Washing Machine
+24
+1
+HomeCare
+Bicycle
+6
+0
+HomeRepair
+Air Conditioner
+36
+1
+CoolService
+Dining Table
+12
+0
+CoolFix
+Roata
+6
+0
+HomeRepair

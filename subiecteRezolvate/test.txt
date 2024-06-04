@@ -1,0 +1,20 @@
+3
+Four Seasons
+Popescu Emanuel
+1000.0
+5
+Secret Garden
+Visan Dorel
+150.5
+2
+Hanul Ancutei
+Visan Dorel
+100
+4
+Decebal
+Ceausescu Nicolae
+400.0
+1
+Belvedere
+Stalin Iosif
+25.3
